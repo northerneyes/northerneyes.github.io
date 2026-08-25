@@ -10,7 +10,7 @@
 <meta property="og:title" content="George Bukhanov · Lead Software Engineer & Frontend Architect">
 <meta property="og:description" content="Lead Software Engineer and Frontend Architect in Espoo, Finland. 10+ years of TypeScript and React: geospatial map editing on Mapbox GL JS, 3D point clouds, and AI-driven engineering workflows.">
 <meta property="og:url" content="https://northerneyes.github.io/">
-<meta property="og:image" content="https://northerneyes.github.io/assets/pointcloud.jpg">
+<meta property="og:image" content="https://northerneyes.github.io/assets/core-ui.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0f0d0a">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -269,6 +269,17 @@
   .shot figcaption { padding: 10px 14px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); border-top: 1px solid var(--line); }
   .prod-note { margin-top: 18px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--faint); }
   .prod-side .embed-facade { margin-top: 0; aspect-ratio: auto; flex: 1; min-height: 180px; }
+  .map-hud {
+    position: absolute; top: 12px; left: 12px; z-index: 4;
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(15, 13, 10, 0.88); border: 1px solid var(--line);
+    padding: 8px 12px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--text);
+  }
+  .map-hud button {
+    background: none; border: 1px solid var(--line); color: var(--muted); cursor: pointer;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 8px;
+  }
+  .map-hud button:hover { border-color: var(--accent); color: var(--accent); }
 
   /* ---------- writing ---------- */
   .pieces { margin-top: 44px; border-top: 1px solid var(--line); max-width: 860px; }
@@ -521,7 +532,7 @@
     <span class="cs-numeral" aria-hidden="true">01</span>
     <div class="slide-content">
       <p class="eyebrow reveal">02 / Selected work</p>
-      <div class="cs-kicker reveal"><span class="slot">DEMO SLOT · LIVE MAPBOX SCENE</span></div>
+      <div class="cs-kicker reveal"><span class="slot">LIVE DEMO · MAP EDITING</span></div>
       <h3 class="cs-title reveal">Real-time geospatial map editing</h3>
       <p class="cs-summary reveal">The map is not a picture, it is the primary editing surface.</p>
       <div class="cs-detail reveal">
@@ -530,6 +541,13 @@
         <div><span class="lbl">Outcome</span><p>The engine powers the platform's Editor application, used daily by utility-sector customers.</p></div>
       </div>
       <div class="cs-tags reveal"><span>Mapbox GL JS</span><span>TypeScript</span><span>React</span></div>
+      <div class="embed-facade reveal" data-map-demo="1" data-open="https://northerneyes.github.io/#work" data-title="Interactive map editing demo" style="background-image: url('assets/core-ui.jpg')">
+        <div class="veil"></div>
+        <div class="facade-inner">
+          <button class="facade-btn"><span class="ring"><span class="tri"></span></span><span>Start the editing demo<span class="facade-sub">Draw a line between the poles, drag a vertex, watch it snap</span></span></button>
+        </div>
+      </div>
+      <p class="embed-cap reveal">Built on MapLibre GL, the open source fork of Mapbox GL JS. Zoom-aware snapping and live measurement are patterns from my production editor, rebuilt from scratch for this demo.</p>
     </div>
   </section>
 
@@ -602,13 +620,13 @@
       <p class="writing-note reveal">These are from Sharper Shape's public materials: the product my map, point cloud and imagery engines render every day.</p>
       <div class="prod-grid reveal">
         <figure class="shot">
-          <img src="assets/pointcloud.jpg" alt="Sharper Shape platform: a massive streaming point cloud of a street with vectorized power lines and poles drawn over it" loading="lazy">
-          <figcaption>3D viewer · streaming point cloud with vectorized conductors and poles</figcaption>
+          <img src="assets/core-ui.jpg" alt="Sharper Shape CORE: one asset shown in three synchronized views, a 3D point cloud with vectorized power lines, a 2D map, and annotated inspection imagery" loading="lazy">
+          <figcaption>CORE · one asset, three synchronized views: 3D point cloud, 2D map, annotated imagery</figcaption>
         </figure>
         <div class="prod-side">
           <figure class="shot">
-            <img src="assets/ai-detection.jpg" alt="AI component detection boxes drawn over a photo of a transmission tower" loading="lazy">
-            <figcaption>AI component detection over inspection imagery</figcaption>
+            <img src="assets/pointcloud.jpg" alt="A massive streaming point cloud of a street with vectorized power lines and poles drawn over it" loading="lazy">
+            <figcaption>3D viewer · streaming point cloud with vectorized conductors</figcaption>
           </figure>
           <div class="embed-facade" data-embed="https://www.youtube-nocookie.com/embed/cjrHaOcu-aw?autoplay=1" data-open="https://www.youtube.com/watch?v=cjrHaOcu-aw" data-title="Sharper Shape Living Digital Twin platform video" style="background-image: url('assets/video-thumb.jpg')">
             <div class="veil"></div>
@@ -730,6 +748,164 @@
     return a;
   });
 
+  /* map editing demo: MapLibre GL loaded on click, synthetic poles, zoom-aware snapping */
+  function startMapDemo(f) {
+    if (f.classList.contains('loaded')) return;
+    f.classList.add('loaded');
+    var mount = document.createElement('div');
+    mount.style.cssText = 'position:absolute;inset:0;';
+    f.appendChild(mount);
+    var css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
+    document.head.appendChild(css);
+    var s = document.createElement('script');
+    s.src = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
+    s.onload = function () { initMapDemo(mount); };
+    document.head.appendChild(s);
+  }
+
+  function initMapDemo(mount) {
+    var map = new maplibregl.Map({
+      container: mount,
+      style: 'https://tiles.openfreemap.org/styles/positron',
+      center: [24.655, 60.2],
+      zoom: 12.6
+    });
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
+    map.getCanvas().style.cursor = 'crosshair';
+
+    function corridor(a, b, n) {
+      var out = [];
+      for (var i = 0; i <= n; i++) {
+        var t = i / n;
+        out.push([
+          a[0] + (b[0] - a[0]) * t + (Math.random() - 0.5) * 0.0016,
+          a[1] + (b[1] - a[1]) * t + (Math.random() - 0.5) * 0.0009
+        ]);
+      }
+      return out;
+    }
+    var poles = corridor([24.598, 60.186], [24.712, 60.214], 16)
+      .concat(corridor([24.615, 60.222], [24.7, 60.185], 14));
+
+    var line = [], dragIdx = -1, hotIdx = -1, suppress = false;
+
+    function snapPx() { return Math.max(10, Math.round(38 - (map.getZoom() - 10) * 6)); }
+    function nearest(pt) {
+      var best = -1, bd = Infinity;
+      for (var i = 0; i < poles.length; i++) {
+        var sp = map.project(poles[i]);
+        var d = Math.sqrt(Math.pow(sp.x - pt.x, 2) + Math.pow(sp.y - pt.y, 2));
+        if (d < bd) { bd = d; best = i; }
+      }
+      return bd <= snapPx() ? best : -1;
+    }
+    function polesData() {
+      return { type: 'FeatureCollection', features: poles.map(function (c, i) {
+        return { type: 'Feature', properties: { hot: i === hotIdx }, geometry: { type: 'Point', coordinates: c } };
+      }) };
+    }
+    function lineData() { return { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: line } }; }
+    function vertsData() {
+      return { type: 'FeatureCollection', features: line.map(function (c, i) {
+        return { type: 'Feature', properties: { i: i }, geometry: { type: 'Point', coordinates: c } };
+      }) };
+    }
+    function lengthKm() {
+      var t = 0;
+      for (var i = 1; i < line.length; i++) {
+        var a = line[i - 1], b = line[i];
+        var dLat = (b[1] - a[1]) * Math.PI / 180, dLon = (b[0] - a[0]) * Math.PI / 180;
+        var q = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+          + Math.cos(a[1] * Math.PI / 180) * Math.cos(b[1] * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        t += 2 * 6371 * Math.asin(Math.sqrt(q));
+      }
+      return t;
+    }
+
+    var hud = document.createElement('div');
+    hud.className = 'map-hud';
+    var hudText = document.createElement('span');
+    var clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.textContent = 'Clear';
+    clearBtn.addEventListener('click', function (e) { e.stopPropagation(); line = []; refresh(); });
+    hud.appendChild(hudText);
+    hud.appendChild(clearBtn);
+    mount.appendChild(hud);
+
+    function refresh() {
+      var sL = map.getSource('line');
+      if (sL) {
+        sL.setData(lineData());
+        map.getSource('verts').setData(vertsData());
+        map.getSource('poles').setData(polesData());
+      }
+      hudText.textContent = line.length
+        ? lengthKm().toFixed(2) + ' km · ' + line.length + ' pts · snap ' + snapPx() + 'px'
+        : 'Click to draw a line. It snaps to the poles.';
+    }
+
+    map.on('load', function () {
+      map.addSource('poles', { type: 'geojson', data: polesData() });
+      map.addSource('line', { type: 'geojson', data: lineData() });
+      map.addSource('verts', { type: 'geojson', data: vertsData() });
+      map.addLayer({ id: 'line', type: 'line', source: 'line', paint: { 'line-color': '#d96b2b', 'line-width': 2.5 } });
+      map.addLayer({ id: 'poles', type: 'circle', source: 'poles', paint: {
+        'circle-radius': ['case', ['get', 'hot'], 7, 4.5],
+        'circle-color': ['case', ['get', 'hot'], '#ffb03a', '#39434d'],
+        'circle-stroke-width': 1.5,
+        'circle-stroke-color': '#ffffff'
+      } });
+      map.addLayer({ id: 'verts', type: 'circle', source: 'verts', paint: {
+        'circle-radius': 5.5, 'circle-color': '#ffffff', 'circle-stroke-color': '#d96b2b', 'circle-stroke-width': 2
+      } });
+
+      function beginDrag(e) {
+        e.preventDefault();
+        dragIdx = e.features[0].properties.i;
+        map.dragPan.disable();
+      }
+      map.on('mousedown', 'verts', beginDrag);
+      map.on('touchstart', 'verts', beginDrag);
+
+      function moveHandler(e) {
+        if (dragIdx >= 0) {
+          hotIdx = nearest(e.point);
+          line[dragIdx] = hotIdx >= 0 ? poles[hotIdx].slice() : [e.lngLat.lng, e.lngLat.lat];
+          refresh();
+        } else {
+          var h = nearest(e.point);
+          if (h !== hotIdx) { hotIdx = h; refresh(); }
+        }
+      }
+      map.on('mousemove', moveHandler);
+      map.on('touchmove', function (e) { if (dragIdx >= 0) moveHandler(e); });
+
+      function endDrag() {
+        if (dragIdx >= 0) {
+          dragIdx = -1;
+          map.dragPan.enable();
+          suppress = true;
+          setTimeout(function () { suppress = false; }, 150);
+          refresh();
+        }
+      }
+      map.on('mouseup', endDrag);
+      map.on('touchend', endDrag);
+
+      map.on('click', function (e) {
+        if (suppress) return;
+        var h = nearest(e.point);
+        line.push(h >= 0 ? poles[h].slice() : [e.lngLat.lng, e.lngLat.lat]);
+        refresh();
+      });
+      map.on('zoom', refresh);
+      refresh();
+    });
+  }
+
   /* click-to-load embeds. When the page runs inside another frame (the preview sandbox
      blocks external iframes there), the play button opens the demo in a new tab instead. */
   var framed = window.self !== window.top;
@@ -745,6 +921,10 @@
       a.style.textDecoration = 'none';
       a.innerHTML = btn.innerHTML;
       btn.parentNode.replaceChild(a, btn);
+      return;
+    }
+    if (f.hasAttribute('data-map-demo')) {
+      btn.addEventListener('click', function () { startMapDemo(f); });
       return;
     }
     btn.addEventListener('click', function () {

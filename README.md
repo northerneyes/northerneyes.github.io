@@ -16,6 +16,8 @@ Some details worth a look in [`index.html`](index.html):
 - **Click-to-load embeds.** The map demo, the Potree point cloud example and the platform video load only on click, so the initial page stays light. When the page runs inside another frame, the same buttons open the content in a new tab instead.
 - **Accessibility.** Everything respects `prefers-reduced-motion` (static visuals, no snap, no count-ups), the accordion is keyboard-friendly with `aria-expanded`, and focus states are visible.
 
+There is also a for-fun alternate skin at [`/crt/`](https://northerneyes.github.io/crt/): the same content as an amber phosphor CRT terminal, boot sequence and all.
+
 ## Running locally
 
 It's a static page:

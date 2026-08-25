@@ -268,10 +268,7 @@
   .shot img { display: block; width: 100%; height: auto; }
   .shot figcaption { padding: 10px 14px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); border-top: 1px solid var(--line); }
   .prod-note { margin-top: 18px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--faint); }
-  .video-slot { position: relative; border: 1px solid var(--line); background: var(--bg-soft); flex: 1; min-height: 150px; display: flex; align-items: center; justify-content: center; gap: 14px; }
-  .video-slot .ring { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--accent); display: flex; align-items: center; justify-content: center; }
-  .video-slot .tri { width: 0; height: 0; border-left: 10px solid var(--accent); border-top: 7px solid transparent; border-bottom: 7px solid transparent; margin-left: 3px; }
-  .video-slot span.lbl { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--muted); }
+  .prod-side .embed-facade { margin-top: 0; aspect-ratio: auto; flex: 1; min-height: 180px; }
 
   /* ---------- writing ---------- */
   .pieces { margin-top: 44px; border-top: 1px solid var(--line); max-width: 860px; }
@@ -613,9 +610,11 @@
             <img src="assets/ai-detection.jpg" alt="AI component detection boxes drawn over a photo of a transmission tower" loading="lazy">
             <figcaption>AI component detection over inspection imagery</figcaption>
           </figure>
-          <div class="video-slot">
-            <span class="ring"><span class="tri"></span></span>
-            <span class="lbl">PLATFORM VIDEO · SLOT</span>
+          <div class="embed-facade" data-embed="https://www.youtube-nocookie.com/embed/cjrHaOcu-aw?autoplay=1" data-open="https://www.youtube.com/watch?v=cjrHaOcu-aw" data-title="Sharper Shape Living Digital Twin platform video" style="background-image: url('assets/video-thumb.jpg')">
+            <div class="veil"></div>
+            <div class="facade-inner">
+              <button class="facade-btn"><span class="ring"><span class="tri"></span></span><span>Watch the platform video<span class="facade-sub">Living Digital Twin · YouTube</span></span></button>
+            </div>
           </div>
         </div>
       </div>
@@ -740,7 +739,7 @@
     if (framed) {
       var a = document.createElement('a');
       a.className = 'facade-btn';
-      a.href = f.getAttribute('data-embed');
+      a.href = f.getAttribute('data-open') || f.getAttribute('data-embed');
       a.target = '_blank';
       a.rel = 'noopener';
       a.style.textDecoration = 'none';
@@ -753,15 +752,32 @@
       var ifr = document.createElement('iframe');
       ifr.src = f.getAttribute('data-embed');
       ifr.title = f.getAttribute('data-title') || 'Embedded demo';
-      ifr.setAttribute('allow', 'fullscreen; xr-spatial-tracking');
+      ifr.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen; xr-spatial-tracking');
+      ifr.setAttribute('allowfullscreen', '');
       ifr.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;';
       f.appendChild(ifr);
       f.classList.add('loaded');
     });
   });
 
-  /* gentle settle: after scrolling stops, ease to the nearest slide edge only if already close */
-  var settleTimer = 0;
+  /* gentle settle: after scrolling stops, glide to the nearest slide edge only if already close.
+     Custom easing (slow start and finish), cancelled the moment the user scrolls again. */
+  var settleTimer = 0, settleAnim = null;
+  function glideTo(to) {
+    var from = window.scrollY, d = to - from, t0 = null;
+    if (Math.abs(d) < 2) return;
+    var dur = Math.min(1100, 600 + Math.abs(d) * 1.2);
+    function step(t) {
+      if (settleAnim === null) return;
+      if (!t0) t0 = t;
+      var k = Math.min(1, (t - t0) / dur);
+      var e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      window.scrollTo(0, from + d * e);
+      if (k < 1) settleAnim = requestAnimationFrame(step);
+      else settleAnim = null;
+    }
+    settleAnim = requestAnimationFrame(step);
+  }
   function settle() {
     var y = window.scrollY;
     var best = null, bestD = Infinity;
@@ -770,15 +786,21 @@
       var d = Math.abs(top - y);
       if (d < bestD) { bestD = d; best = top; }
     });
-    if (best !== null && bestD > 8 && bestD < window.innerHeight * 0.18) {
-      window.scrollTo({ top: best, behavior: 'smooth' });
+    if (best !== null && bestD > 8 && bestD < window.innerHeight * 0.16) {
+      glideTo(best);
     }
   }
   if (!reduced && window.innerWidth > 900) {
     window.addEventListener('scroll', function () {
       clearTimeout(settleTimer);
-      settleTimer = setTimeout(settle, 260);
+      if (settleAnim === null) settleTimer = setTimeout(settle, 420);
     }, { passive: true });
+    ['wheel', 'touchstart', 'keydown'].forEach(function (ev) {
+      window.addEventListener(ev, function () {
+        clearTimeout(settleTimer);
+        if (settleAnim !== null) { cancelAnimationFrame(settleAnim); settleAnim = null; }
+      }, { passive: true });
+    });
   }
 
   /* ---------- morphing amber point cloud ---------- */

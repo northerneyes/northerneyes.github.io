@@ -12,7 +12,8 @@ Some details worth a look in [`index.html`](index.html):
 
 - **Morphing point cloud.** The background visual is ~1,300 particles in a `<canvas>`, generated procedurally (a transmission tower, a globe, a terrain ridge, a network graph, a cube lattice) and interpolated from one shape to the next as you scroll. Plain 2D canvas with a hand-rolled 3D projection, no WebGL library.
 - **Slide scrolling with a gentle settle.** Sections behave like slides, but instead of CSS scroll-snap (which grabs mid-scroll) a small script waits until you stop and, only if you are already near a slide edge, glides the rest of the way with eased animation. Any input cancels it instantly.
-- **Click-to-load embeds.** The Potree point cloud example and the platform video load an iframe only on click, so the initial page stays light. When the page runs inside another frame, the same buttons open the content in a new tab instead.
+- **A real map editing demo.** The first case study loads MapLibre GL on click: draw a line between synthetic utility poles, drag any vertex, and watch it snap with a radius that tightens as you zoom in, with a live length readout. These are patterns from my production editor, rebuilt from scratch in ~150 lines. Tiles by OpenFreeMap, no API key.
+- **Click-to-load embeds.** The map demo, the Potree point cloud example and the platform video load only on click, so the initial page stays light. When the page runs inside another frame, the same buttons open the content in a new tab instead.
 - **Accessibility.** Everything respects `prefers-reduced-motion` (static visuals, no snap, no count-ups), the accordion is keyboard-friendly with `aria-expanded`, and focus states are visible.
 
 ## Running locally

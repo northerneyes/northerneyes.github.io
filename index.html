@@ -1,10 +1,1032 @@
 <!doctype html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<title>HelloWorld</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>George Bukhanov · Lead Software Engineer &amp; Frontend Architect</title>
+<meta name="description" content="Lead Software Engineer and Frontend Architect in Espoo, Finland. 10+ years of TypeScript and React: geospatial map editing on Mapbox GL JS, 3D point clouds, and AI-driven engineering workflows.">
+<link rel="canonical" href="https://northerneyes.github.io/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="George Bukhanov · Lead Software Engineer & Frontend Architect">
+<meta property="og:description" content="Lead Software Engineer and Frontend Architect in Espoo, Finland. 10+ years of TypeScript and React: geospatial map editing on Mapbox GL JS, 3D point clouds, and AI-driven engineering workflows.">
+<meta property="og:url" content="https://northerneyes.github.io/">
+<meta property="og:image" content="https://northerneyes.github.io/assets/pointcloud.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0f0d0a">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "George Bukhanov",
+  "jobTitle": "Lead Software Engineer & Frontend Architect",
+  "url": "https://northerneyes.github.io/",
+  "email": "mailto:gbuhanov@gmail.com",
+  "address": {"@type": "PostalAddress", "addressLocality": "Espoo", "addressCountry": "FI"},
+  "sameAs": [
+    "https://github.com/northerneyes",
+    "https://www.linkedin.com/in/george-bukhanov-93802ba3",
+    "https://medium.com/@northerneyes"
+  ]
+}
+</script>
+<title>Boldface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0d0a;
+    --bg-soft: #14110d;
+    --text: #ece5d8;
+    --muted: #8f8677;
+    --faint: #5c554a;
+    --line: #2a251d;
+    --accent: #ffb03a;
+    --display: 'Bricolage Grotesque', 'Avenir Next', system-ui, sans-serif;
+    --mono: 'Spline Sans Mono', ui-monospace, SFMono-Regular, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  /* slide alignment is handled by a gentle JS settle after scrolling stops, not CSS snap */
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--display);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: var(--text); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  p { margin: 0; }
+  h1, h2, h3 { margin: 0; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 36px; width: 100%; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; font-weight: 500;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent);
+  }
+
+  /* ---------- fixed shape canvas ---------- */
+  #shape { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  main { position: relative; z-index: 1; }
+
+  /* ---------- nav ---------- */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 30;
+    background: rgba(15, 13, 10, 0.85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner {
+    max-width: 1240px; margin: 0 auto; padding: 16px 36px;
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  }
+  .brand { font-family: var(--mono); font-size: 13px; letter-spacing: 0.08em; text-decoration: none; color: var(--text); white-space: nowrap; }
+  .brand b { color: var(--accent); font-weight: 500; }
+  .nav-links { display: flex; gap: 26px; }
+  .nav-links a {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); text-decoration: none; border-bottom: 1px solid transparent;
+    transition: color 160ms, border-color 160ms; padding: 4px 0;
+  }
+  .nav-links a:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ---------- slide rail ---------- */
+  .rail {
+    position: fixed; right: 20px; top: 50%; transform: translateY(-50%); z-index: 25;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .rail a { display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); transition: background 200ms, transform 200ms; }
+  .rail a:hover { background: var(--muted); }
+  .rail a.on { background: var(--accent); transform: scale(1.35); }
+
+  /* ---------- slides ---------- */
+  .slide {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 110px 0 70px 0;
+    position: relative;
+  }
+  .slide-content { max-width: 680px; }
+
+  /* ---------- hero ---------- */
+  .slide-hero { padding-bottom: 0; }
+  .hero-body { margin: auto 0; }
+  .hero-words { line-height: 0.92; }
+  .hero-line { display: block; overflow: hidden; }
+  .hero-line span {
+    display: inline-block;
+    font-weight: 800;
+    font-size: clamp(60px, 13vw, 185px);
+    letter-spacing: -0.035em;
+    text-transform: uppercase;
+    transform: translateY(112%);
+    animation: rise 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .hero-line:nth-child(1) span { animation-delay: 0.10s; }
+  .hero-line:nth-child(2) span { animation-delay: 0.26s; }
+  .hero-line.stroke span {
+    color: transparent;
+    -webkit-text-stroke: 2px var(--accent);
+  }
+  @keyframes rise { to { transform: translateY(0); } }
+  .hero-meta {
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 48px;
+    margin-top: 52px; flex-wrap: wrap;
+    opacity: 0; animation: fadein 800ms ease 0.8s forwards;
+  }
+  @keyframes fadein { to { opacity: 1; } }
+  .role { font-size: clamp(19px, 2.1vw, 26px); font-weight: 700; letter-spacing: -0.01em; margin-top: 14px; }
+  .role i { font-style: normal; color: var(--accent); }
+  .hero-sub { margin-top: 10px; color: var(--muted); max-width: 44ch; font-size: 17px; font-weight: 400; }
+  .hero-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 20px; }
+  .cta-row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; text-decoration: none;
+    font-family: var(--mono); font-size: 12.5px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 15px 24px; transition: transform 160ms, background 160ms, color 160ms, border-color 160ms;
+  }
+  .btn-solid { background: var(--accent); color: #171204; }
+  .btn-solid:hover { transform: translateY(-2px); background: #ffc266; }
+  .btn-ghost { border: 1px solid var(--line); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+  .soc { display: flex; gap: 20px; }
+  .soc a { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+  .soc a:hover { color: var(--accent); }
+  .scroll-cue {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--faint); text-decoration: none; display: flex; align-items: center; gap: 12px;
+    margin: 40px 0 22px 0;
+  }
+  .scroll-cue:hover { color: var(--accent); }
+  .scroll-cue .dash { display: inline-block; width: 48px; height: 1px; background: var(--faint); position: relative; overflow: hidden; }
+  .scroll-cue .dash::after { content: ''; position: absolute; top: 0; left: -50%; width: 50%; height: 1px; background: var(--accent); animation: dashmove 1.8s ease-in-out infinite; }
+  @keyframes dashmove { 0% { left: -50%; } 70%, 100% { left: 100%; } }
+
+  /* ---------- marquee (bottom of hero slide, full-bleed) ---------- */
+  .marquee {
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    overflow: hidden; white-space: nowrap; padding: 18px 0; background: var(--bg-soft);
+    margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
+  }
+  .marquee-track { display: inline-block; animation: marquee 46s linear infinite; }
+  .marquee-track span {
+    font-family: var(--mono); font-size: 13px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .marquee-track b { color: var(--accent); font-weight: 500; padding: 0 18px; }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* ---------- about + stats ---------- */
+  .intro-text { margin-top: 36px; max-width: 32ch; font-size: clamp(24px, 2.6vw, 34px); font-weight: 500; line-height: 1.45; letter-spacing: -0.015em; }
+  .intro-text em { font-style: normal; color: var(--accent); }
+  .intro-more { margin-top: 26px; max-width: 56ch; color: var(--muted); font-size: 16.5px; }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin-top: 64px; border-top: 1px solid var(--line); padding-top: 34px; max-width: 900px; }
+  .stat { border-left: 1px solid var(--line); padding: 4px 24px; }
+  .stat:first-child { border-left: none; padding-left: 0; }
+  .stat-num { font-weight: 800; font-size: clamp(34px, 3.6vw, 52px); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat-num .u { color: var(--accent); font-size: 0.55em; font-weight: 700; }
+  .stat-label { margin-top: 10px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+
+  /* ---------- section heads ---------- */
+  .sec-head h2 { font-size: clamp(34px, 4.6vw, 64px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.02; margin-top: 16px; text-wrap: balance; }
+
+  /* ---------- strengths accordion ---------- */
+  .strengths { margin-top: 44px; border-top: 1px solid var(--line); max-width: 860px; }
+  .strength { border-bottom: 1px solid var(--line); }
+  .strength-btn {
+    width: 100%; background: none; border: none; cursor: pointer; text-align: left;
+    display: flex; align-items: baseline; gap: 24px; padding: 20px 0; color: var(--text);
+    font-family: var(--display);
+  }
+  .strength-num { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: var(--faint); min-width: 34px; }
+  .strength-title {
+    font-size: clamp(22px, 2.8vw, 36px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;
+    transform-origin: left center;
+    transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1), color 250ms;
+  }
+  .strength-btn:hover .strength-title, .strength.open .strength-title { transform: scale(1.05); color: var(--accent); }
+  .strength-plus { margin-left: auto; font-family: var(--mono); font-size: 20px; color: var(--muted); transition: transform 300ms; }
+  .strength.open .strength-plus { transform: rotate(45deg); color: var(--accent); }
+  .strength-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 450ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .strength.open .strength-body { grid-template-rows: 1fr; }
+  .strength-inner { overflow: hidden; }
+  .s-co { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; padding: 0 0 16px 58px; }
+  .s-co:last-child { padding-bottom: 28px; }
+  .s-co .co { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); padding-top: 3px; }
+  .s-co ul { margin: 0; padding: 0 0 0 18px; max-width: 60ch; color: #c9c0af; font-size: 15px; line-height: 1.6; display: flex; flex-direction: column; gap: 8px; }
+  .s-co li::marker { color: var(--accent); }
+
+  /* ---------- case studies ---------- */
+  .cs-numeral {
+    position: absolute; top: 96px; right: 36px; z-index: 0; line-height: 1; user-select: none;
+    font-weight: 800; font-size: clamp(100px, 14vw, 200px); letter-spacing: -0.04em;
+    color: transparent; -webkit-text-stroke: 1px rgba(236, 229, 216, 0.12); pointer-events: none;
+  }
+  .cs-kicker { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 14px; }
+  .slot {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    color: var(--accent); border: 1px solid rgba(255, 176, 58, 0.4); background: rgba(255, 176, 58, 0.08);
+    padding: 4px 9px;
+  }
+  .cs-title {
+    margin-top: 16px; font-size: clamp(30px, 4vw, 54px); font-weight: 800; line-height: 1.04;
+    letter-spacing: 0.04em; transition: letter-spacing 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+    text-wrap: balance;
+  }
+  .slide.in-view .cs-title { letter-spacing: -0.025em; }
+  .cs-summary { margin-top: 14px; font-size: 19px; font-weight: 500; color: var(--muted); }
+  .cs-detail { display: flex; flex-direction: column; gap: 16px; margin-top: 26px; }
+  .cs-detail .lbl {
+    display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 4px;
+  }
+  .cs-detail p { font-size: 15.5px; color: #c9c0af; max-width: 62ch; }
+  .cs-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .cs-tags span {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); border: 1px solid var(--line); padding: 5px 11px;
+  }
+
+  /* ---------- embeds & production media ---------- */
+  .embed-facade { position: relative; margin-top: 26px; border: 1px solid var(--line); overflow: hidden; aspect-ratio: 16 / 7; background-size: cover; background-position: center; }
+  .embed-facade .veil { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15,13,10,0.9), rgba(15,13,10,0.45)); }
+  .facade-inner { position: absolute; inset: 0; display: flex; align-items: center; gap: 18px; padding: 0 26px; }
+  .facade-btn { display: flex; align-items: center; gap: 16px; background: none; border: none; cursor: pointer; color: var(--text); font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; text-align: left; padding: 0; }
+  .facade-btn .ring { width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid var(--accent); display: flex; align-items: center; justify-content: center; flex: none; transition: transform 200ms, background 200ms; }
+  .facade-btn:hover .ring { transform: scale(1.08); background: rgba(255, 176, 58, 0.12); }
+  .facade-btn .tri { width: 0; height: 0; border-left: 12px solid var(--accent); border-top: 8px solid transparent; border-bottom: 8px solid transparent; margin-left: 3px; }
+  .facade-sub { display: block; margin-top: 4px; color: var(--muted); text-transform: none; letter-spacing: 0.02em; }
+  .facade-out { margin-left: auto; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-decoration: none; white-space: nowrap; }
+  .facade-out:hover { color: var(--accent); }
+  .embed-facade.loaded .facade-inner, .embed-facade.loaded .veil { display: none; }
+  .embed-cap { margin-top: 10px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--faint); }
+
+  .prod-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; margin-top: 44px; }
+  .prod-side { display: flex; flex-direction: column; gap: 20px; }
+  .shot { margin: 0; border: 1px solid var(--line); background: var(--bg-soft); }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot figcaption { padding: 10px 14px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); border-top: 1px solid var(--line); }
+  .prod-note { margin-top: 18px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--faint); }
+  .video-slot { position: relative; border: 1px solid var(--line); background: var(--bg-soft); flex: 1; min-height: 150px; display: flex; align-items: center; justify-content: center; gap: 14px; }
+  .video-slot .ring { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--accent); display: flex; align-items: center; justify-content: center; }
+  .video-slot .tri { width: 0; height: 0; border-left: 10px solid var(--accent); border-top: 7px solid transparent; border-bottom: 7px solid transparent; margin-left: 3px; }
+  .video-slot span.lbl { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--muted); }
+
+  /* ---------- writing ---------- */
+  .pieces { margin-top: 44px; border-top: 1px solid var(--line); max-width: 860px; }
+  .piece {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 28px;
+    padding: 26px 0; border-bottom: 1px solid var(--line); text-decoration: none;
+  }
+  .piece h4 {
+    margin: 0; font-size: clamp(20px, 2.6vw, 34px); font-weight: 700; letter-spacing: -0.02em;
+    transition: color 200ms, transform 350ms cubic-bezier(0.16, 1, 0.3, 1); transform-origin: left center;
+  }
+  .piece:hover h4 { color: var(--accent); transform: scale(1.04); }
+  .piece-kind { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .piece .arr { color: var(--accent); font-size: 22px; transition: transform 250ms; }
+  .piece:hover .arr { transform: translate(4px, -4px); }
+  .writing-note { margin-top: 28px; max-width: 58ch; color: var(--muted); }
+
+  /* ---------- contact ---------- */
+  .email {
+    display: inline-block; margin-top: 30px; text-decoration: none;
+    font-size: clamp(28px, 5.6vw, 84px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.05;
+    color: var(--text); word-break: break-all;
+    transition: color 250ms;
+  }
+  .email:hover { color: var(--accent); }
+  .foot { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; flex-wrap: wrap; margin-top: 70px; border-top: 1px solid var(--line); padding-top: 28px; max-width: 860px; }
+  .foot .soc a { color: var(--muted); }
+  .foot-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--faint); }
+
+  /* ---------- reveal ---------- */
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity 800ms ease, transform 800ms ease; }
+  .in-view .reveal, .reveal.in-view { opacity: 1; transform: none; }
+  .in-view .reveal:nth-child(2) { transition-delay: 120ms; }
+  .in-view .reveal:nth-child(3) { transition-delay: 240ms; }
+  .in-view .reveal:nth-child(4) { transition-delay: 360ms; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; scroll-snap-type: none; }
+    .hero-line span { animation: none; transform: none; }
+    .hero-meta { animation: none; opacity: 1; }
+    .marquee-track { animation: none; }
+    .scroll-cue .dash::after { animation: none; }
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .cs-title { letter-spacing: -0.025em; transition: none; }
+    .strength-title, .piece h4, .btn { transition: none; }
+    .strength-body { transition: none; }
+  }
+
+  @media (max-width: 900px) {
+    .slide { min-height: 0; padding: 90px 0 30px 0; }
+    .slide-hero { min-height: 100vh; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 32px; max-width: none; }
+    .stat, .stat:first-child { border-left: none; padding: 0; }
+    .hero-meta { flex-direction: column; align-items: flex-start; }
+    .hero-actions { align-items: flex-start; }
+    .s-co { grid-template-columns: 1fr; gap: 6px; padding-left: 0; }
+    .prod-grid { grid-template-columns: 1fr; }
+    .embed-facade { aspect-ratio: 16 / 10; }
+    .facade-inner { flex-direction: column; align-items: flex-start; justify-content: center; gap: 14px; }
+    .facade-out { margin-left: 0; }
+    .cs-numeral { top: 70px; right: 20px; opacity: 0.7; }
+    .rail, .scroll-cue { display: none; }
+    .nav-links { gap: 14px; }
+  }
+</style>
 </head>
 <body>
-	<p>Hello world</p>
+
+<canvas id="shape" aria-hidden="true"></canvas>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">george bukhanov <b>/</b> northerneyes</a>
+    <nav class="nav-links">
+      <a href="#strengths">Strengths</a>
+      <a href="#work">Work</a>
+      <a href="#writing">Writing</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<nav class="rail" id="rail" aria-label="Slides"></nav>
+
+<main id="top">
+  <!-- ============ SLIDE: HERO ============ -->
+  <section class="slide slide-hero wrap" data-shape="none" data-rail="Hello">
+    <div class="hero-body">
+      <div class="hero-words" aria-label="George Bukhanov">
+        <span class="hero-line"><span>George</span></span>
+        <span class="hero-line stroke"><span>Bukhanov</span></span>
+      </div>
+      <div class="hero-meta">
+        <div>
+          <p class="eyebrow">60.205° N, 24.655° E · Espoo, Finland</p>
+          <p class="role">Lead Software Engineer <i>&amp;</i> Frontend Architect</p>
+          <p class="hero-sub">An experienced full-stack engineer with a passion for crafting complex web products and carrying them all the way to delivery.</p>
+        </div>
+        <div class="hero-actions">
+          <div class="cta-row">
+            <a class="btn btn-solid" href="#work">See the work</a>
+            <a class="btn btn-ghost" href="mailto:gbuhanov@gmail.com">Get in touch</a>
+          </div>
+          <div class="soc">
+            <a href="https://github.com/northerneyes">GitHub</a>
+            <a href="https://www.linkedin.com/in/george-bukhanov-93802ba3">LinkedIn</a>
+            <a href="https://medium.com/@northerneyes">Medium</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <a class="scroll-cue" href="#about"><span class="dash"></span><span>Scroll to discover</span></a>
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track" id="track">
+        <span>Mapbox GL JS<b>✴</b>Potree<b>✴</b>three.js<b>✴</b>OpenSeadragon<b>✴</b>TypeScript<b>✴</b>React<b>✴</b>Node.js<b>✴</b>Vite<b>✴</b>Rolldown<b>✴</b>Biome<b>✴</b>Playwright<b>✴</b>MCP<b>✴</b>Claude Code<b>✴</b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE: ABOUT ============ -->
+  <section id="about" class="slide wrap" data-shape="globe" data-rail="About">
+    <div>
+      <p class="eyebrow reveal">00 / About</p>
+      <p class="intro-text reveal">I take a hard product problem and turn it into an application that is <em>fast, reliable and pleasant</em> to work on.</p>
+      <p class="intro-more reveal">I'm a Lead Frontend Architect and full-stack engineer with 10+ years of experience building complex, high-performance web applications. For the last 8 years I have owned the frontend technical direction of a geospatial platform at Sharper Shape: maps, 3D point clouds, high-resolution imagery, ~286,000 lines of TypeScript.</p>
+      <div class="stats reveal">
+        <div class="stat"><div class="stat-num"><span class="count" data-to="10">0</span><span class="u">+</span></div><div class="stat-label">years of experience</div></div>
+        <div class="stat"><div class="stat-num"><span class="count" data-to="286">0</span><span class="u">k+</span></div><div class="stat-label">lines of TypeScript owned</div></div>
+        <div class="stat"><div class="stat-num"><span class="count" data-to="100">0</span><span class="u">+</span></div><div class="stat-label">AI-authored E2E specs</div></div>
+        <div class="stat"><div class="stat-num"><span class="count" data-to="8">0</span><span class="u">y+</span></div><div class="stat-label">one codebase, no legacy</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE: STRENGTHS ============ -->
+  <section id="strengths" class="slide wrap" data-shape="terrain" data-far="1" data-rail="Strengths">
+    <div>
+      <div class="sec-head reveal">
+        <p class="eyebrow">01 / What I bring</p>
+        <h2>Strengths, proven in production</h2>
+      </div>
+      <div class="strengths reveal">
+        <div class="strength open">
+          <button class="strength-btn" aria-expanded="true"><span class="strength-num">S1</span><span class="strength-title">Engineering Leadership</span><span class="strength-plus">+</span></button>
+          <div class="strength-body"><div class="strength-inner">
+            <div class="s-co"><span class="co">Sharper Shape</span><ul>
+              <li>Chose and owned the tech stack the platform is built on, and shaped long-term frontend strategy together with product and business</li>
+              <li>Split and assigned work across developers, mentored engineers and contractors as the team grew from 2 devs, and was the person other leads consulted on technical and business questions</li>
+              <li>Worked directly with backend and department leads on cross-team decisions, well beyond my formal responsibilities</li>
+            </ul></div>
+            <div class="s-co"><span class="co">Toughbyte</span><ul>
+              <li>Led project teams end to end: scoping, estimation, client communication and delivery</li>
+              <li>Set technical direction, code standards and development practices as the senior engineer on each engagement, for clients like Webflow, Edenred and YIT</li>
+              <li>Mentored developers beyond our own team: coached client companies' engineers and ran workshops on modern frontend practices</li>
+            </ul></div>
+          </div></div>
+        </div>
+        <div class="strength">
+          <button class="strength-btn" aria-expanded="false"><span class="strength-num">S2</span><span class="strength-title">Ownership &amp; Delivery</span><span class="strength-plus">+</span></button>
+          <div class="strength-body"><div class="strength-inner">
+            <div class="s-co"><span class="co">Sharper Shape</span><ul>
+              <li>Owned the frontend technical direction end to end for 8 years, from architecture decisions to how engineering work supports the business</li>
+            </ul></div>
+            <div class="s-co"><span class="co">Oppex</span><ul>
+              <li>Designed and built the web UI of a search engine for public procurement: React/Redux frontend with server-side rendering for SEO, and contributed across the stack up to the Node.js backend</li>
+            </ul></div>
+            <div class="s-co"><span class="co">Teknokom</span><ul>
+              <li>Owned the frontend across a product line of satellite navigation software: a complex SPA inside a large ASP.NET MVC product, its mobile web version, and native Android and iOS companion apps</li>
+            </ul></div>
+          </div></div>
+        </div>
+        <div class="strength">
+          <button class="strength-btn" aria-expanded="false"><span class="strength-num">S3</span><span class="strength-title">Architecture</span><span class="strength-plus">+</span></button>
+          <div class="strength-body"><div class="strength-inner">
+            <div class="s-co"><span class="co">Sharper Shape</span><ul>
+              <li>Broke a monolithic frontend (WebCORE) into specialized apps (Editor, Admin Control, Inspector), which gave us faster releases and better maintainability</li>
+              <li>Created Sharper Shell, a modular container architecture for running multiple frontend apps together</li>
+              <li>Defined the state management patterns and modular design principles used across all apps: ~286,000 lines of TypeScript kept healthy and legacy-free for 8 years</li>
+            </ul></div>
+            <div class="s-co"><span class="co">Teknokom</span><ul>
+              <li>Responsible for the overall frontend architecture across company products: fast, stable, flexible, easy to extend</li>
+            </ul></div>
+          </div></div>
+        </div>
+        <div class="strength">
+          <button class="strength-btn" aria-expanded="false"><span class="strength-num">S4</span><span class="strength-title">Full-Stack Breadth</span><span class="strength-plus">+</span></button>
+          <div class="strength-body"><div class="strength-inner">
+            <div class="s-co"><span class="co">Sharper Shape</span><ul>
+              <li>Built production Node.js services: PDF rendering with a headless browser, REST services and GraphQL</li>
+            </ul></div>
+            <div class="s-co"><span class="co">Oppex</span><ul>
+              <li>Node.js backend work with server-side rendering, async routing and code splitting for fast initial loads</li>
+            </ul></div>
+            <div class="s-co"><span class="co">Earlier career</span><ul>
+              <li>Shipped production code in C#, Java, Objective-C, Swift and C: native Android and iOS apps, real-time computer vision software. Picking up a new stack is not a risk for me</li>
+            </ul></div>
+          </div></div>
+        </div>
+        <div class="strength">
+          <button class="strength-btn" aria-expanded="false"><span class="strength-num">S5</span><span class="strength-title">Developer Experience</span><span class="strength-plus">+</span></button>
+          <div class="strength-body"><div class="strength-inner">
+            <div class="s-co"><span class="co">Sharper Shape</span><ul>
+              <li>Optimized the build process end to end: webpack to Vite (esbuild, now Rolldown), tuned GitHub workflows, cut build times drastically</li>
+              <li>Moved linting and type-checking to Rust and Go based tools (Biome, tsgo) so everyday feedback loops stay near-instant</li>
+              <li>One of my main goals was to make the project a happy place to work in, and I think I succeeded</li>
+            </ul></div>
+          </div></div>
+        </div>
+        <div class="strength">
+          <button class="strength-btn" aria-expanded="false"><span class="strength-num">S6</span><span class="strength-title">Testing &amp; Quality</span><span class="strength-plus">+</span></button>
+          <div class="strength-body"><div class="strength-inner">
+            <div class="s-co"><span class="co">Sharper Shape</span><ul>
+              <li>An agent-based E2E pipeline with 100+ Playwright specs running across customer environments, with auto-generated documentation</li>
+            </ul></div>
+            <div class="s-co"><span class="co">Oppex</span><ul>
+              <li>Testing at every level: Mocha + Enzyme for UI unit tests, WebdriverIO integration tests in real browsers, cloud cross-browser testing via Sauce Labs</li>
+              <li>Component-driven development with Storybook and an interactive living styleguide</li>
+            </ul></div>
+            <div class="s-co"><span class="co">Toughbyte</span><ul>
+              <li>Supported Webflow's US team during their React migration, mainly on the testing side</li>
+            </ul></div>
+          </div></div>
+        </div>
+        <div class="strength">
+          <button class="strength-btn" aria-expanded="false"><span class="strength-num">S7</span><span class="strength-title">AI-Driven Engineering Workflows</span><span class="strength-plus">+</span></button>
+          <div class="strength-body"><div class="strength-inner">
+            <div class="s-co"><span class="co">Sharper Shape</span><ul>
+              <li>Built an agent-based E2E testing pipeline where AI agents observe the live UI before writing Playwright tests, with a secure credential model and CI fan-out across customer environments</li>
+              <li>Integrated MCP servers for ticketing, error monitoring and browser automation into the development loop</li>
+              <li>Built multi-model agent orchestration on Claude Code and set up the team's context engineering practices, always with human review and verification habits</li>
+            </ul></div>
+          </div></div>
+        </div>
+        <div class="strength">
+          <button class="strength-btn" aria-expanded="false"><span class="strength-num">S8</span><span class="strength-title">Advanced Visualization Engines</span><span class="strength-plus">+</span></button>
+          <div class="strength-body"><div class="strength-inner">
+            <div class="s-co"><span class="co">Sharper Shape</span><ul>
+              <li>Built a map engine on Mapbox GL JS with real-time geospatial editing</li>
+              <li>Developed 3D point cloud rendering (Potree, three.js) and a high-resolution image system (OpenSeadragon) with a React annotation engine</li>
+              <li>Eight years of making the browser render heavy things fast, at production quality, for daily users</li>
+            </ul></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE: CS1 ============ -->
+  <section id="work" class="slide wrap" data-shape="tower" data-rail="Map editing">
+    <span class="cs-numeral" aria-hidden="true">01</span>
+    <div class="slide-content">
+      <p class="eyebrow reveal">02 / Selected work</p>
+      <div class="cs-kicker reveal"><span class="slot">DEMO SLOT · LIVE MAPBOX SCENE</span></div>
+      <h3 class="cs-title reveal">Real-time geospatial map editing</h3>
+      <p class="cs-summary reveal">The map is not a picture, it is the primary editing surface.</p>
+      <div class="cs-detail reveal">
+        <div><span class="lbl">Context</span><p>Utility companies inspect and manage physical infrastructure (power lines, poles, equipment) through Sharper Shape's platform.</p></div>
+        <div><span class="lbl">What I built</span><p>The map engine on Mapbox GL JS with real-time geospatial editing: drawing and modifying assets directly on the map, custom rendering for large datasets, and the interaction patterns that keep editing precise at any zoom level.</p></div>
+        <div><span class="lbl">Outcome</span><p>The engine powers the platform's Editor application, used daily by utility-sector customers.</p></div>
+      </div>
+      <div class="cs-tags reveal"><span>Mapbox GL JS</span><span>TypeScript</span><span>React</span></div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE: CS2 ============ -->
+  <section class="slide wrap" data-shape="cloud" data-rail="Point clouds">
+    <span class="cs-numeral" aria-hidden="true">02</span>
+    <div class="slide-content">
+      <p class="eyebrow reveal">02 / Selected work</p>
+      <div class="cs-kicker reveal"><span class="slot">LIVE DEMO · POTREE</span></div>
+      <h3 class="cs-title reveal">3D point clouds &amp; high-resolution imagery</h3>
+      <p class="cs-summary reveal">Gigabyte-scale visual data, explorable in a browser tab.</p>
+      <div class="cs-detail reveal">
+        <div><span class="lbl">Context</span><p>Inspection data arrives as massive 3D point cloud scans and ultra-high-resolution photos. Both must be explorable in the browser, fast.</p></div>
+        <div><span class="lbl">What I built</span><p>3D point cloud rendering built on Potree and three.js, a high-resolution image system on OpenSeadragon, and a React-based annotation engine that overlays structured metadata on imagery. I have also experimented with rendering point clouds inside Mapbox itself.</p></div>
+        <div><span class="lbl">Outcome</span><p>Inspectors work with gigabyte-scale visual data in a browser tab, with annotation tools on top.</p></div>
+      </div>
+      <div class="cs-tags reveal"><span>Potree</span><span>three.js</span><span>OpenSeadragon</span><span>React</span></div>
+      <div class="embed-facade reveal" data-embed="https://potree.org/potree/examples/vr_eclepens.html" data-title="Potree point cloud example, Eclepens quarry" style="background-image: url('assets/pointcloud.jpg')">
+        <div class="veil"></div>
+        <div class="facade-inner">
+          <button class="facade-btn"><span class="ring"><span class="tri"></span></span><span>Load a live point cloud<span class="facade-sub">Eclepens quarry · an open Potree example, the same tech I build on</span></span></button>
+          <a class="facade-out" href="https://potree.org/potree/examples/vr_eclepens.html">Open on potree.org ↗</a>
+        </div>
+      </div>
+      <p class="embed-cap reveal">External example from potree.org, loaded only on click so the page stays fast. In this preview it opens in a new tab; on the deployed site it plays right here.</p>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE: CS3 ============ -->
+  <section class="slide wrap" data-shape="network" data-rail="AI workflows">
+    <span class="cs-numeral" aria-hidden="true">03</span>
+    <div class="slide-content">
+      <p class="eyebrow reveal">02 / Selected work</p>
+      <div class="cs-kicker reveal"><span class="slot">SLOT · PIPELINE DIAGRAM</span></div>
+      <h3 class="cs-title reveal">AI-driven engineering workflows</h3>
+      <p class="cs-summary reveal">Tests that see the product the way users do.</p>
+      <div class="cs-detail reveal">
+        <div><span class="lbl">Context</span><p>UI test automation usually rots: tests written from source code break with every refactor. We wanted tests that see the product the way users do, and an AI workflow the team can trust.</p></div>
+        <div><span class="lbl">What I built</span><p>An agent-based E2E pipeline where AI agents observe the live product in a real browser before writing Playwright tests, producing user-behavior-driven specs that survive refactors. Around it: a secure credential model, CI fan-out across customer environments, MCP server integrations (ticketing, error monitoring, browser automation) and multi-model orchestration where a stronger model plans and reviews while a cheaper one implements.</p></div>
+        <div><span class="lbl">Outcome</span><p>100+ specs across environments with auto-generated human-readable documentation. The lesson I keep repeating: a good architecture foundation is the key for these AI tools.</p></div>
+      </div>
+      <div class="cs-tags reveal"><span>Claude Code</span><span>Playwright</span><span>MCP</span><span>CI</span></div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE: CS4 ============ -->
+  <section class="slide wrap" data-shape="cube" data-rail="Developer experience">
+    <span class="cs-numeral" aria-hidden="true">04</span>
+    <div class="slide-content">
+      <p class="eyebrow reveal">02 / Selected work</p>
+      <div class="cs-kicker reveal"><span class="slot">SLOT · BUILD OUTPUT</span></div>
+      <h3 class="cs-title reveal">Developer experience at scale</h3>
+      <p class="cs-summary reveal">Eight years, no legacy corners.</p>
+      <div class="cs-detail reveal">
+        <div><span class="lbl">Context</span><p>A ~286,000-line TypeScript monorepo that grew for 8 years without accumulating legacy, because keeping it pleasant to work in was treated as a real goal.</p></div>
+        <div><span class="lbl">What I built</span><p>Broke a monolithic frontend into specialized apps and created Sharper Shell, a modular container architecture for running them together. Migrated the toolchain from webpack to Vite (esbuild, now Rolldown), tuned GitHub workflows, cut build times drastically, and moved linting and type-checking to Rust and Go based tools.</p></div>
+        <div><span class="lbl">Outcome</span><p>Near-instant feedback loops and a codebase with no legacy corners. One of my main goals was to make the project a happy place to work in, and I think I succeeded.</p></div>
+      </div>
+      <div class="cs-tags reveal"><span>Vite</span><span>Rolldown</span><span>Biome</span><span>tsgo</span><span>GitHub Actions</span></div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE: IN PRODUCTION ============ -->
+  <section id="production" class="slide wrap" data-shape="none" data-rail="In production">
+    <div>
+      <div class="sec-head reveal">
+        <p class="eyebrow">03 / In production</p>
+        <h2>The platform, publicly</h2>
+      </div>
+      <p class="writing-note reveal">These are from Sharper Shape's public materials: the product my map, point cloud and imagery engines render every day.</p>
+      <div class="prod-grid reveal">
+        <figure class="shot">
+          <img src="assets/pointcloud.jpg" alt="Sharper Shape platform: a massive streaming point cloud of a street with vectorized power lines and poles drawn over it" loading="lazy">
+          <figcaption>3D viewer · streaming point cloud with vectorized conductors and poles</figcaption>
+        </figure>
+        <div class="prod-side">
+          <figure class="shot">
+            <img src="assets/ai-detection.jpg" alt="AI component detection boxes drawn over a photo of a transmission tower" loading="lazy">
+            <figcaption>AI component detection over inspection imagery</figcaption>
+          </figure>
+          <div class="video-slot">
+            <span class="ring"><span class="tri"></span></span>
+            <span class="lbl">PLATFORM VIDEO · SLOT</span>
+          </div>
+        </div>
+      </div>
+      <p class="prod-note reveal">© Sharper Shape · from public materials at sharpershape.com</p>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE: WRITING ============ -->
+  <section id="writing" class="slide wrap" data-shape="wave" data-rail="Writing">
+    <div>
+      <div class="sec-head reveal">
+        <p class="eyebrow">04 / Writing &amp; side projects</p>
+        <h2>Off the clock</h2>
+      </div>
+      <p class="writing-note reveal">I occasionally write about frontend engineering, and games were my early love: I read Jesse Schell's The Art of Game Design back in the days and built my own small Android game.</p>
+      <div class="pieces reveal">
+        <a class="piece" href="https://medium.com/@northerneyes">
+          <h4>The Evolution of Redux Action Creators</h4>
+          <span class="piece-kind">Medium · Article <span class="arr">↗</span></span>
+        </a>
+        <a class="piece" href="https://medium.com/@northerneyes">
+          <h4>CSS Modules</h4>
+          <span class="piece-kind">Medium · Article <span class="arr">↗</span></span>
+        </a>
+        <a class="piece" href="https://github.com/northerneyes/CatchTheNotes">
+          <h4>CatchTheNotes, an Android game built and shipped solo</h4>
+          <span class="piece-kind">GitHub · Java <span class="arr">↗</span></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE: CONTACT ============ -->
+  <section id="contact" class="slide wrap" data-shape="flat" data-rail="Contact">
+    <div>
+      <p class="eyebrow reveal">05 / Contact</p>
+      <a class="email reveal" href="mailto:gbuhanov@gmail.com">gbuhanov@gmail.com</a>
+      <div class="foot reveal">
+        <div class="soc">
+          <a href="https://github.com/northerneyes">GitHub</a>
+          <a href="https://www.linkedin.com/in/george-bukhanov-93802ba3">LinkedIn</a>
+          <a href="https://medium.com/@northerneyes">Medium</a>
+        </div>
+        <span class="foot-meta">GEORGE BUKHANOV · ESPOO, FINLAND · 60.205° N</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* marquee: duplicate track content for a seamless loop */
+  var track = document.getElementById('track');
+  track.innerHTML = track.innerHTML + track.innerHTML;
+
+  /* strengths accordion */
+  document.querySelectorAll('.strength').forEach(function (item) {
+    var btn = item.querySelector('.strength-btn');
+    btn.addEventListener('click', function () {
+      var open = item.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  });
+
+  /* count-ups */
+  var counted = false;
+  function countUp() {
+    if (counted) return;
+    counted = true;
+    document.querySelectorAll('.count').forEach(function (el) {
+      var to = parseInt(el.getAttribute('data-to'), 10);
+      if (reduced) { el.textContent = to; return; }
+      var t0 = null;
+      function tick(t) {
+        if (!t0) t0 = t;
+        var k = Math.min(1, (t - t0) / 1400);
+        var e = 1 - Math.pow(1 - k, 3);
+        el.textContent = Math.round(to * e);
+        if (k < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+
+  /* slide in-view: staggers child .reveal elements */
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) {
+        en.target.classList.add('in-view');
+        if (en.target.querySelector('.count')) countUp();
+        obs.unobserve(en.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.slide, .reveal').forEach(function (el) { obs.observe(el); });
+  if (reduced) countUp();
+
+  /* ---------- slide rail ---------- */
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var rail = document.getElementById('rail');
+  var dots = slides.map(function (s, i) {
+    var a = document.createElement('a');
+    a.href = '#';
+    a.setAttribute('aria-label', s.getAttribute('data-rail') || ('Slide ' + (i + 1)));
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      s.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+    });
+    rail.appendChild(a);
+    return a;
+  });
+
+  /* click-to-load embeds. When the page runs inside another frame (the preview sandbox
+     blocks external iframes there), the play button opens the demo in a new tab instead. */
+  var framed = window.self !== window.top;
+  document.querySelectorAll('.embed-facade').forEach(function (f) {
+    var btn = f.querySelector('.facade-btn');
+    if (!btn) return;
+    if (framed) {
+      var a = document.createElement('a');
+      a.className = 'facade-btn';
+      a.href = f.getAttribute('data-embed');
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.style.textDecoration = 'none';
+      a.innerHTML = btn.innerHTML;
+      btn.parentNode.replaceChild(a, btn);
+      return;
+    }
+    btn.addEventListener('click', function () {
+      if (f.classList.contains('loaded')) return;
+      var ifr = document.createElement('iframe');
+      ifr.src = f.getAttribute('data-embed');
+      ifr.title = f.getAttribute('data-title') || 'Embedded demo';
+      ifr.setAttribute('allow', 'fullscreen; xr-spatial-tracking');
+      ifr.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;';
+      f.appendChild(ifr);
+      f.classList.add('loaded');
+    });
+  });
+
+  /* gentle settle: after scrolling stops, ease to the nearest slide edge only if already close */
+  var settleTimer = 0;
+  function settle() {
+    var y = window.scrollY;
+    var best = null, bestD = Infinity;
+    slides.forEach(function (s) {
+      var top = s.getBoundingClientRect().top + y;
+      var d = Math.abs(top - y);
+      if (d < bestD) { bestD = d; best = top; }
+    });
+    if (best !== null && bestD > 8 && bestD < window.innerHeight * 0.18) {
+      window.scrollTo({ top: best, behavior: 'smooth' });
+    }
+  }
+  if (!reduced && window.innerWidth > 900) {
+    window.addEventListener('scroll', function () {
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(settle, 260);
+    }, { passive: true });
+  }
+
+  /* ---------- morphing amber point cloud ---------- */
+  var canvas = document.getElementById('shape');
+  var ctx = canvas.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var N = 1296;
+
+  function fit(arr) {
+    var out = [], i;
+    if (arr.length >= N) {
+      var step = arr.length / N;
+      for (i = 0; i < N; i++) out.push(arr[Math.floor(i * step)]);
+    } else {
+      for (i = 0; i < N; i++) out.push(arr[i % arr.length]);
+    }
+    return out;
+  }
+  function grid(fy) {
+    var a = [];
+    for (var i = 0; i < 36; i++) for (var j = 0; j < 36; j++) {
+      var x = (i - 17.5) * 14, z = (j - 17.5) * 14;
+      a.push({ x: x, y: fy(x, z), z: z });
+    }
+    return a;
+  }
+  var SHAPES = {};
+  SHAPES.plane = grid(function () { return 0; });
+  SHAPES.flat = grid(function (x, z) { return 4 * Math.sin(x / 90) * Math.cos(z / 90); });
+  SHAPES.wave = grid(function (x, z) { return 26 * Math.sin(x / 70 + z / 110); });
+  SHAPES.terrain = grid(function (x, z) {
+    return 120 * Math.exp(-Math.pow((x + 40) / 150, 2)) * Math.exp(-Math.pow(z / 210, 2))
+      + 55 * Math.exp(-Math.pow((x - 160) / 90, 2)) * Math.exp(-Math.pow((z - 70) / 150, 2))
+      + 7 * Math.sin(x / 28) * Math.cos(z / 36);
+  });
+  SHAPES.globe = (function () {
+    var pts = [], R = 185, i;
+    for (var lat = -75; lat <= 75; lat += 15) {
+      var phi = lat * Math.PI / 180, r = R * Math.cos(phi), y = R * Math.sin(phi);
+      var n = Math.max(10, Math.round(r / 2.6));
+      for (i = 0; i < n; i++) {
+        var a = i / n * Math.PI * 2;
+        pts.push({ x: Math.cos(a) * r, y: y, z: Math.sin(a) * r });
+      }
+    }
+    for (var lon = 0; lon < 360; lon += 20) {
+      var th = lon * Math.PI / 180;
+      for (var la = -88; la <= 88; la += 4) {
+        var p2 = la * Math.PI / 180;
+        pts.push({ x: Math.cos(p2) * Math.cos(th) * R, y: Math.sin(p2) * R, z: Math.cos(p2) * Math.sin(th) * R });
+      }
+    }
+    return fit(pts);
+  })();
+  SHAPES.tower = (function () {
+    var pts = [];
+    var H = 340, B = 62, T = 14;
+    function w(y) { return B + (T - B) * (y / H); }
+    function line(x1, y1, z1, x2, y2, z2, st) {
+      var dx = x2 - x1, dy = y2 - y1, dz = z2 - z1;
+      var n = Math.max(2, Math.round(Math.sqrt(dx * dx + dy * dy + dz * dz) / st));
+      for (var i = 0; i <= n; i++) { var t = i / n; pts.push({ x: x1 + dx * t, y: y1 + dy * t - 170, z: z1 + dz * t }); }
+    }
+    [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (c) { line(c[0] * B, 0, c[1] * B, c[0] * T, H, c[1] * T, 6); });
+    var lv = [30, 75, 120, 165, 210, 250, 285, 320];
+    lv.forEach(function (y) {
+      var s = w(y);
+      line(-s, y, -s, s, y, -s, 8); line(s, y, -s, s, y, s, 8);
+      line(s, y, s, -s, y, s, 8); line(-s, y, s, -s, y, -s, 8);
+    });
+    for (var i = 0; i < lv.length - 1; i++) {
+      var y1 = lv[i], y2 = lv[i + 1], s1 = w(y1), s2 = w(y2);
+      line(-s1, y1, -s1, s2, y2, -s2, 9); line(s1, y1, -s1, -s2, y2, -s2, 9);
+      line(-s1, y1, s1, s2, y2, s2, 9); line(s1, y1, s1, -s2, y2, s2, 9);
+    }
+    [[245, 140], [305, 100]].forEach(function (arm) {
+      var y = arm[0], L = arm[1];
+      line(-L, y, 0, L, y, 0, 6);
+      [-L, L].forEach(function (tx) {
+        for (var z = -240; z <= 240; z += 12) {
+          var droop = 40 * (1 - Math.cos(2 * Math.PI * z / 480)) / 2;
+          pts.push({ x: tx, y: y - 8 - droop - 170, z: z });
+        }
+      });
+    });
+    line(0, H, 0, 0, H + 24, 0, 5);
+    return fit(pts);
+  })();
+  SHAPES.cloud = (function () {
+    var pts = [];
+    for (var i = 0; i < N; i++) {
+      var a = Math.random() * Math.PI * 2, r = Math.pow(Math.random(), 0.5) * 210;
+      var x = Math.cos(a) * r, z = Math.sin(a) * r;
+      var y = 90 * Math.exp(-r / 130) + (Math.random() - 0.5) * 55;
+      pts.push({ x: x, y: y, z: z });
+    }
+    return pts;
+  })();
+  SHAPES.network = (function () {
+    var nodes = [], pts = [], i, j;
+    for (i = 0; i < 26; i++) {
+      nodes.push({
+        x: (Math.random() - 0.5) * 420,
+        y: (Math.random() - 0.5) * 260,
+        z: (Math.random() - 0.5) * 420
+      });
+    }
+    nodes.forEach(function (n) {
+      for (var k = 0; k < 10; k++) pts.push({ x: n.x + (Math.random() - 0.5) * 14, y: n.y + (Math.random() - 0.5) * 14, z: n.z + (Math.random() - 0.5) * 14 });
+    });
+    for (i = 0; i < nodes.length; i++) {
+      var best = [], d;
+      for (j = 0; j < nodes.length; j++) {
+        if (i === j) continue;
+        d = Math.pow(nodes[i].x - nodes[j].x, 2) + Math.pow(nodes[i].y - nodes[j].y, 2) + Math.pow(nodes[i].z - nodes[j].z, 2);
+        best.push([d, j]);
+      }
+      best.sort(function (a, b) { return a[0] - b[0]; });
+      for (j = 0; j < 2; j++) {
+        var m = nodes[best[j][1]];
+        for (var t = 0; t <= 1; t += 0.07) {
+          pts.push({ x: nodes[i].x + (m.x - nodes[i].x) * t, y: nodes[i].y + (m.y - nodes[i].y) * t, z: nodes[i].z + (m.z - nodes[i].z) * t });
+        }
+      }
+    }
+    return fit(pts);
+  })();
+  SHAPES.cube = (function () {
+    var pts = [], v = [-140, -70, 0, 70, 140];
+    v.forEach(function (a) {
+      v.forEach(function (b) {
+        for (var t = -140; t <= 140; t += 14) {
+          pts.push({ x: t, y: a, z: b });
+          pts.push({ x: a, y: t, z: b });
+          pts.push({ x: a, y: b, z: t });
+        }
+      });
+    });
+    return fit(pts);
+  })();
+
+  var RAMP = ['#4d4232', '#5e503c', '#6f5e45', '#806c4e', '#927b57', '#a48a60', '#b79a6a', '#cfae76'];
+  var mobile = window.innerWidth < 901;
+  var pos = SHAPES.plane.map(function (p) { return { x: p.x, y: p.y, z: p.z }; });
+  var target = SHAPES.plane;
+  var opacity = 0, targetOpacity = 0;
+  var theta = 0.5, time = 0, waveAmp = 0, targetWave = 0;
+  var cxK = 0.71, targetCx = 0.71;
+  var currentShape = 'none';
+
+  function resize() {
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    mobile = window.innerWidth < 901;
+  }
+  resize();
+  window.addEventListener('resize', function () { resize(); if (reduced) staticFrame(); });
+
+  function pickSlide() {
+    var mid = window.innerHeight / 2;
+    for (var i = 0; i < slides.length; i++) {
+      var r = slides[i].getBoundingClientRect();
+      if (r.top <= mid && r.bottom >= mid) return i;
+    }
+    return -1;
+  }
+
+  function frame() {
+    var W = canvas.width, Hc = canvas.height;
+    ctx.clearRect(0, 0, W, Hc);
+    if (opacity < 0.02) return;
+    var cx = W * (mobile ? 0.5 : cxK), cy = Hc * 0.54, f = 900;
+    var scale = Hc / 640;
+    var cosT = Math.cos(theta), sinT = Math.sin(theta);
+    for (var i = 0; i < N; i++) {
+      var p = pos[i];
+      var y = p.y + waveAmp * Math.sin(time * 1.4 + p.x / 60 + p.z / 80);
+      var xr = p.x * cosT - p.z * sinT;
+      var zr = p.x * sinT + p.z * cosT;
+      var s = f / (f + zr + 420);
+      if (s <= 0) continue;
+      var sx = cx + xr * s * scale;
+      var sy = cy - y * s * scale;
+      if (sx < -20 || sx > W + 20 || sy < -20 || sy > Hc + 20) continue;
+      var amber = i % 17 === 0;
+      var b = Math.max(0, Math.min(7, Math.round((1 - (zr + 420) / 840) * 7)));
+      ctx.globalAlpha = opacity * (amber ? 0.95 : 0.62);
+      ctx.fillStyle = amber ? '#ffb03a' : RAMP[b];
+      var sz = Math.max(1, (amber ? 2.1 : 1.6) * dpr * s);
+      ctx.fillRect(sx, sy, sz, sz);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function update() {
+    var idx = pickSlide();
+    var name = idx >= 0 ? slides[idx].getAttribute('data-shape') : currentShape;
+    dots.forEach(function (d, i) { d.classList.toggle('on', i === idx); });
+    if (name !== currentShape) {
+      currentShape = name;
+      if (name !== 'none' && SHAPES[name]) target = SHAPES[name];
+      var far = idx >= 0 && slides[idx].hasAttribute('data-far');
+      targetOpacity = name === 'none' ? 0 : (mobile ? 0.28 : (far ? 0.45 : 0.8));
+      targetCx = far ? 0.86 : 0.71;
+      targetWave = (name === 'wave' || name === 'flat') ? 1 : 0;
+    }
+  }
+
+  function loop() {
+    update();
+    theta += 0.0018;
+    time += 0.016;
+    opacity += (targetOpacity - opacity) * 0.05;
+    cxK += (targetCx - cxK) * 0.05;
+    waveAmp += (targetWave * 10 - waveAmp) * 0.04;
+    for (var i = 0; i < N; i++) {
+      pos[i].x += (target[i].x - pos[i].x) * 0.055;
+      pos[i].y += (target[i].y - pos[i].y) * 0.055;
+      pos[i].z += (target[i].z - pos[i].z) * 0.055;
+    }
+    if (!document.hidden) frame();
+    requestAnimationFrame(loop);
+  }
+
+  function staticFrame() {
+    var idx = pickSlide();
+    var name = idx >= 0 ? slides[idx].getAttribute('data-shape') : 'plane';
+    dots.forEach(function (d, i) { d.classList.toggle('on', i === idx); });
+    if (name !== 'none' && SHAPES[name]) {
+      target = SHAPES[name];
+      pos = target.map(function (p) { return { x: p.x, y: p.y, z: p.z }; });
+      cxK = (idx >= 0 && slides[idx].hasAttribute('data-far')) ? 0.86 : 0.71;
+      opacity = 0.4;
+    } else {
+      opacity = 0;
+    }
+    frame();
+  }
+
+  if (reduced) {
+    staticFrame();
+    window.addEventListener('scroll', staticFrame, { passive: true });
+  } else {
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+
 </body>
 </html>
